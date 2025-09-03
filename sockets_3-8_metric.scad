@@ -117,32 +117,24 @@ function sumAccumulativeOffset(array, index, gap) = index == 0
 // Overall size of the model
 largestSocketDiameter = largestSocketSize(socketDiameters);
 
-// Calculate actual socket heights using inverted parabola for clearance
-// Geometric clearance calculation based on socket diameter and tray dimensions
-function calculateClearanceAngle(socketDiameter, oppositeRowDepth) = 
-    atan((socketDiameter/2) / oppositeRowDepth);
+// Calculate actual socket heights using clearance plane approach
+// Fixed clearance beyond the furthest tip of tilted sockets
+socketClearanceExtension = 3;  // mm of clearance above the furthest socket tip
 
-// Calculate clearance angle - same for both rows since it's based on diameter interference, not depth
-// Use a standard reference depth for consistent clearance calculation
-referenceDepth = 30;  // Use bottom row depth as reference for consistent behavior
-clearanceAngle = calculateClearanceAngle(largestSocketDiameter, referenceDepth);
+// Calculate the Y position of the furthest tip of tilted sockets
+// Furthest tip Y = socket_height * cos(angle) + socket_radius * sin(angle)
+bottomFurthestTipY = socketHeight1Base * cos(bottomSocketAngle) + (largestSocketDiameter/2) * sin(bottomSocketAngle);
+topFurthestTipY = socketHeight2Base * cos(topSocketAngle) + (largestSocketDiameter/2) * sin(topSocketAngle);
 
-// Debug output to see the clearance angle
-echo("Clearance angle for both rows:", clearanceAngle, "degrees");
+// Calculate required heights: furthest tip position + extra clearance
+socketHeight1 = bottomFurthestTipY + socketClearanceExtension;
+socketHeight2 = topFurthestTipY + socketClearanceExtension;
 
-maxIncrease = 1.3;  // 30% increase at peak
-
-// Adaptive curve: use higher power when past peak for better drop-off
-function adaptiveHeightFactor(angle, clearanceAngle, maxInc) = 
-    let(normalizedAngle = (angle - clearanceAngle) / clearanceAngle)
-    angle <= clearanceAngle 
-        ? 1 + (maxInc - 1) * (1 - pow(normalizedAngle, 4))  // quartic growth before peak
-        : 1 + (maxInc - 1) * (1 - pow(normalizedAngle, 6)); // 6th power drop after peak
-
-bottomHeightFactor = adaptiveHeightFactor(bottomSocketAngle, clearanceAngle, maxIncrease);
-topHeightFactor = adaptiveHeightFactor(topSocketAngle, clearanceAngle, maxIncrease);
-socketHeight1 = socketHeight1Base * max(0.5, bottomHeightFactor);  // minimum 50% of base
-socketHeight2 = socketHeight2Base * max(0.5, topHeightFactor);     // minimum 50% of base
+// Debug output to see the furthest tip positions
+echo("Bottom furthest tip Y position:", bottomFurthestTipY, "mm");
+echo("Top furthest tip Y position:", topFurthestTipY, "mm");
+echo("Bottom total height:", socketHeight1, "mm");
+echo("Top total height:", socketHeight2, "mm");
 
 //// Modifies original use of socketHeight variable
 //// to accommodate the divier wall
