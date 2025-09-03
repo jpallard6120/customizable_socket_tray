@@ -61,15 +61,6 @@ bottomSocketAngle = 0;
 // Recommended range: 0-30 degrees for easy socket removal
 topSocketAngle = 0;
 
-// Calculate actual socket heights using inverted parabola for clearance
-bottomClearanceAngle = 15;  // degrees where clearance is achieved for bottom row
-topClearanceAngle = 25;     // degrees where clearance is achieved for top row
-maxIncrease = 1.3;          // 30% increase at peak
-bottomHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((bottomSocketAngle - bottomClearanceAngle) / bottomClearanceAngle, 2));
-topHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((topSocketAngle - topClearanceAngle) / topClearanceAngle, 2));
-socketHeight1 = socketHeight1Base * max(0.5, bottomHeightFactor);  // minimum 50% of base
-socketHeight2 = socketHeight2Base * max(0.5, topHeightFactor);     // minimum 50% of base
-
 // Wall width between and above sockets
 wallWidthBetweenTools = 2;
 // Wall size above sockets. Set to 0 for no wall above
@@ -105,14 +96,6 @@ fontVariable = "Liberation Sans";
 // ###############################################
 // ***********************************************
 
-//// Modifies original use of socketHeight variable
-//// to accommodate the divier wall
-socketHeight = socketHeight1 + socketHeight2 + dividerThickness;
-
-//// Calculate divider wall z axis location
-offsetCalc = (textPaddingTopAndBottom * 2) + textSize + socketHeight1;
-
-
 // Size of the text area
 textAreaThickness = textSize + (textPaddingTopAndBottom * 2);
 
@@ -129,6 +112,31 @@ function sumAccumulativeOffset(array, index, gap) = index == 0
 
 // Overall size of the model
 largestSocketDiameter = largestSocketSize(socketDiameters);
+
+// Calculate actual socket heights using inverted parabola for clearance
+// Geometric clearance calculation based on socket diameter and tray dimensions
+function calculateClearanceAngle(socketDiameter, oppositeRowDepth) = 
+    atan((socketDiameter/2) / oppositeRowDepth);
+
+// Calculate clearance angles for each row based on geometry
+bottomRowSeparation = socketHeight2Base;  // Bottom sockets need to clear top socket depth
+topRowSeparation = socketHeight1Base;     // Top sockets need to clear bottom socket depth
+largestBottomClearance = calculateClearanceAngle(largestSocketDiameter, bottomRowSeparation);
+largestTopClearance = calculateClearanceAngle(largestSocketDiameter, topRowSeparation);
+
+maxIncrease = 1.3;  // 30% increase at peak
+bottomHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((bottomSocketAngle - largestBottomClearance) / largestBottomClearance, 2));
+topHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((topSocketAngle - largestTopClearance) / largestTopClearance, 2));
+socketHeight1 = socketHeight1Base * max(0.5, bottomHeightFactor);  // minimum 50% of base
+socketHeight2 = socketHeight2Base * max(0.5, topHeightFactor);     // minimum 50% of base
+
+//// Modifies original use of socketHeight variable
+//// to accommodate the divier wall
+socketHeight = socketHeight1 + socketHeight2 + dividerThickness;
+
+//// Calculate divider wall z axis location
+offsetCalc = (textPaddingTopAndBottom * 2) + textSize + socketHeight1;
+
 xSize = sumAccumulativeOffset(socketDiameters, len(socketDiameters)-1, wallWidthBetweenTools) + wallWidthBetweenTools + (wallWidthExtraOnEnds * 3);
 ySize = socketHeight + textAreaThickness + wallWidthAboveTools;
 zSize = (largestSocketDiameter / 2) + wallWidthBehindTools - overallHeightOffset; // Length of the block
