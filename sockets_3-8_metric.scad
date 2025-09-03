@@ -118,9 +118,9 @@ largestSocketDiameter = largestSocketSize(socketDiameters);
 function calculateClearanceAngle(socketDiameter, oppositeRowDepth) = 
     atan((socketDiameter/2) / oppositeRowDepth);
 
-// Calculate clearance angles for each row based on geometry
-bottomRowSeparation = socketHeight2Base;  // Bottom sockets need to clear top socket depth
-topRowSeparation = socketHeight1Base;     // Top sockets need to clear bottom socket depth
+// Calculate clearance angles for each row based on their own geometry
+bottomRowSeparation = socketHeight1Base;  // Bottom sockets clearance based on their own depth
+topRowSeparation = socketHeight2Base;     // Top sockets clearance based on their own depth
 largestBottomClearance = calculateClearanceAngle(largestSocketDiameter, bottomRowSeparation);
 largestTopClearance = calculateClearanceAngle(largestSocketDiameter, topRowSeparation);
 
