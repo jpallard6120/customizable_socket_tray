@@ -61,9 +61,14 @@ bottomSocketAngle = 0;
 // Recommended range: 0-30 degrees for easy socket removal
 topSocketAngle = 0;
 
-// Calculate actual socket heights accounting for tilt angles
-socketHeight1 = socketHeight1Base / cos(bottomSocketAngle);
-socketHeight2 = socketHeight2Base / cos(topSocketAngle);
+// Calculate actual socket heights using inverted parabola for clearance
+bottomClearanceAngle = 15;  // degrees where clearance is achieved for bottom row
+topClearanceAngle = 25;     // degrees where clearance is achieved for top row
+maxIncrease = 1.3;          // 30% increase at peak
+bottomHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((bottomSocketAngle - bottomClearanceAngle) / bottomClearanceAngle, 2));
+topHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((topSocketAngle - topClearanceAngle) / topClearanceAngle, 2));
+socketHeight1 = socketHeight1Base * max(0.5, bottomHeightFactor);  // minimum 50% of base
+socketHeight2 = socketHeight2Base * max(0.5, topHeightFactor);     // minimum 50% of base
 
 // Wall width between and above sockets
 wallWidthBetweenTools = 2;
@@ -229,9 +234,11 @@ union () {
     }
     
     //// **************************
-    //// Divider wall
+    //// Divider wall - only show when both angles are 0 degrees
     //// **************************
-    translate([0,offsetCalc,0]) {
-        solidDivider();
+    if (bottomSocketAngle == 0 && topSocketAngle == 0) {
+        translate([0,offsetCalc,0]) {
+            solidDivider();
+        }
     }
 }
