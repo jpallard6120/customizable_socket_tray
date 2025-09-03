@@ -32,10 +32,10 @@ dividerThickness = 2;
 
 //// Two separate heights added, top & bottom
 //// (These values are not influenced by clearance offset)
-// Bottom socket height (exact size, add clearance manually)
-socketHeight1 = 30;
-// Top socket height (exact size, add clearance manually)
-socketHeight2 = 54;
+// Bottom socket height base value (exact size, add clearance manually)
+socketHeight1Base = 30;
+// Top socket height base value (exact size, add clearance manually)  
+socketHeight2Base = 54;
 
 // Size of the text
 textSize = 5;
@@ -60,6 +60,10 @@ bottomSocketAngle = 0;
 // Angle for top row of sockets (positive tilts forward)  
 // Recommended range: 0-30 degrees for easy socket removal
 topSocketAngle = 0;
+
+// Calculate actual socket heights accounting for tilt angles
+socketHeight1 = socketHeight1Base / cos(bottomSocketAngle);
+socketHeight2 = socketHeight2Base / cos(topSocketAngle);
 
 // Wall width between and above sockets
 wallWidthBetweenTools = 2;
