@@ -61,6 +61,10 @@ bottomSocketAngle = 0;
 // Recommended range: 0-30 degrees for easy socket removal
 topSocketAngle = 0;
 
+//// Socket visualization toggle
+// Set to true to show semi-transparent sockets in the tray for visualization
+showSockets = true;
+
 // Wall width between and above sockets
 wallWidthBetweenTools = 2;
 // Wall size above sockets. Set to 0 for no wall above
@@ -118,15 +122,25 @@ largestSocketDiameter = largestSocketSize(socketDiameters);
 function calculateClearanceAngle(socketDiameter, oppositeRowDepth) = 
     atan((socketDiameter/2) / oppositeRowDepth);
 
-// Calculate clearance angles for each row based on their own geometry
-bottomRowSeparation = socketHeight1Base;  // Bottom sockets clearance based on their own depth
-topRowSeparation = socketHeight2Base;     // Top sockets clearance based on their own depth
-largestBottomClearance = calculateClearanceAngle(largestSocketDiameter, bottomRowSeparation);
-largestTopClearance = calculateClearanceAngle(largestSocketDiameter, topRowSeparation);
+// Calculate clearance angle - same for both rows since it's based on diameter interference, not depth
+// Use a standard reference depth for consistent clearance calculation
+referenceDepth = 30;  // Use bottom row depth as reference for consistent behavior
+clearanceAngle = calculateClearanceAngle(largestSocketDiameter, referenceDepth);
+
+// Debug output to see the clearance angle
+echo("Clearance angle for both rows:", clearanceAngle, "degrees");
 
 maxIncrease = 1.3;  // 30% increase at peak
-bottomHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((bottomSocketAngle - largestBottomClearance) / largestBottomClearance, 2));
-topHeightFactor = 1 + (maxIncrease - 1) * (1 - pow((topSocketAngle - largestTopClearance) / largestTopClearance, 2));
+
+// Adaptive curve: use higher power when past peak for better drop-off
+function adaptiveHeightFactor(angle, clearanceAngle, maxInc) = 
+    let(normalizedAngle = (angle - clearanceAngle) / clearanceAngle)
+    angle <= clearanceAngle 
+        ? 1 + (maxInc - 1) * (1 - pow(normalizedAngle, 4))  // quartic growth before peak
+        : 1 + (maxInc - 1) * (1 - pow(normalizedAngle, 6)); // 6th power drop after peak
+
+bottomHeightFactor = adaptiveHeightFactor(bottomSocketAngle, clearanceAngle, maxIncrease);
+topHeightFactor = adaptiveHeightFactor(topSocketAngle, clearanceAngle, maxIncrease);
 socketHeight1 = socketHeight1Base * max(0.5, bottomHeightFactor);  // minimum 50% of base
 socketHeight2 = socketHeight2Base * max(0.5, topHeightFactor);     // minimum 50% of base
 
@@ -200,6 +214,31 @@ module socketHoles() {
     }
 }
 
+// Module to visualize actual sockets sitting in the tray
+module visualizeSockets() {
+    for (yIndex = [0:socketsPerRow - 1]) {
+        // Use actual socket diameter (without clearance)
+        diameter = socketDiameters[yIndex];
+        xPos = sumAccumulativeOffset(socketDiameters, yIndex, wallWidthBetweenTools) - (0.5 * diameter) + xStart;
+        
+        // Bottom row sockets - semi-transparent blue
+        translate ([xPos, textAreaThickness, socketHoleZ]) {
+            rotate([270 + bottomSocketAngle, 0, 0]) {
+                color([0, 0.5, 1, 0.6]) // Semi-transparent blue
+                cylinder (h = socketHeight1Base, d = diameter, center = false);
+            }
+        }
+        
+        // Top row sockets - semi-transparent red  
+        translate ([xPos, textAreaThickness + socketHeight1 + dividerThickness, socketHoleZ]) {
+            rotate([270 + topSocketAngle, 0, 0]) {
+                color([1, 0.3, 0.3, 0.6]) // Semi-transparent red
+                cylinder (h = socketHeight2Base, d = diameter, center = false);
+            }
+        }
+    }
+}
+
 //// **************************
 //// First union adds divider wall to original code
 //// **************************
@@ -248,5 +287,12 @@ union () {
         translate([0,offsetCalc,0]) {
             solidDivider();
         }
+    }
+    
+    // **************************
+    // Visualize sockets sitting in the tray (optional)
+    // **************************
+    if (showSockets) {
+        visualizeSockets();
     }
 }
