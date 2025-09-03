@@ -98,4 +98,6 @@ This enhanced version was "vibe coded" with essentially zero prior OpenSCAD expe
 
 ## License
 
-This enhanced version is licensed under Creative Commons - Attribution (CC BY), maintaining the same license as Breno Auto Garage's remix and honoring the open-source spirit of all contributors.
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+
+This enhanced version is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0) - see the [LICENSE](LICENSE) file for details. This maintains compatibility with Breno Auto Garage's remix and honors the open-source spirit of all contributors.
