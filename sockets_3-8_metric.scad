@@ -57,6 +57,12 @@ dividerHeightOffset = 2;
 // This is useful for adding extra strength or clearance to the tray base
 additionalTrayHeight = 7;  // mm of height adjustment (positive = taller, negative = shorter)
 
+//// Additional front extension
+// Extra length added to the front of the tray in the Y direction (in mm)
+// Positive values extend the tray forward to provide more clearance around text
+// Use this when socket depth cuts into the text area
+additionalFrontExtension = 0;  // mm of front extension
+
 //// Angle parameters for tilting socket pockets (in degrees)
 // Angle for bottom row of sockets (positive tilts forward)
 // Recommended range: 0-30 degrees for easy socket removal
@@ -151,9 +157,16 @@ offsetCalc = (textPaddingTopAndBottom * 2) + textSize + socketHeight1;
 // Add back wall thickness to ySize when top angle is small to prevent sockets sliding out
 backWallThickness = (topSocketAngle <= 5) ? wallWidthBetweenTools : 0;  // Use wallWidthBetweenTools as back wall thickness
 
-xSize = sumAccumulativeOffset(socketDiameters, len(socketDiameters)-1, wallWidthBetweenTools) + wallWidthBetweenTools + (wallWidthExtraOnEnds * 3);
-ySize = socketHeight + textAreaThickness + wallWidthAboveTools;
+// Calculate base tray height first
 zSize = (largestSocketDiameter / 2) + wallWidthBehindTools + additionalTrayHeight; // Length of the block + additional height adjustment
+
+//// Position socket cutouts based on socketDepthPercent parameter
+socketDepth = zSize * (socketDepthPercent / 100);  // Convert percentage to actual depth
+socketHoleZ = zSize - socketDepth;
+
+xSize = sumAccumulativeOffset(socketDiameters, len(socketDiameters)-1, wallWidthBetweenTools) + wallWidthBetweenTools + (wallWidthExtraOnEnds * 3);
+// Add manual front extension to maintain text clearance
+ySize = socketHeight + textAreaThickness + wallWidthAboveTools + additionalFrontExtension;
 
 // Debug output to see the furthest tip positions
 echo("Bottom furthest tip Y position:", bottomFurthestTipY, "mm");
@@ -162,6 +175,7 @@ echo("Bottom total height:", socketHeight1, "mm");
 echo("Top total height:", socketHeight2, "mm");
 echo("Top socket angle:", topSocketAngle, "degrees");
 echo("Back wall thickness:", backWallThickness, "mm");
+echo("Additional front extension:", additionalFrontExtension, "mm");
 echo("Total ySize:", ySize, "mm");
 echo("Tray height (zSize):", zSize, "mm");
 echo("Socket depth:", socketDepth, "mm", "(", socketDepthPercent, "% deeper than default)");
@@ -175,10 +189,6 @@ xStart = (xSize + wallWidthBetweenTools - sumAccumulativeOffset(socketDiameters,
 //// Calculate divider wall height including offset
 dividerHeight = zSize - dividerHeightOffset;
 
-//// Position socket cutouts based on socketDepthPercent parameter
-socketDepth = zSize * (socketDepthPercent / 100);  // Convert percentage to actual depth
-socketHoleZ = zSize - socketDepth;
-
 module solidBlock() {
     cube ([xSize, ySize, zSize]);
 }
@@ -191,7 +201,7 @@ module solidDivider() {
 //// Back wall for top row (when angle is small/zero to prevent sockets sliding out)
 module topRowBackWall() {
     if (topSocketAngle <= 5) {
-        translate([0, socketHeight + textAreaThickness + wallWidthAboveTools, 0]) {
+        translate([0, socketHeight + textAreaThickness + wallWidthAboveTools + additionalFrontExtension, 0]) {
             cube([xSize, wallWidthBetweenTools, zSize]);
         }
     }
@@ -229,8 +239,8 @@ module socketHoles() {
         socketRadius = diameter / 2;
         rectWidth = diameter;  // Same width as cylinder diameter
         rectHeight = zSize + 10;  // Extend well above the block
-        translate ([xPos - rectWidth/2, -1, socketRadius]) {
-            cube([rectWidth, socketHeight + 2, rectHeight]);
+        translate ([xPos - rectWidth/2, 0, socketRadius]) {  // Start at Y=0 instead of Y=-1 to avoid cutting text
+            cube([rectWidth, socketHeight + 1, rectHeight]);
         }
     }
 }
@@ -243,7 +253,7 @@ module visualizeSockets() {
         xPos = sumAccumulativeOffset(socketDiameters, yIndex, wallWidthBetweenTools) - (0.5 * diameter) + xStart;
         
         // Bottom row sockets - semi-transparent blue
-        translate ([xPos, textAreaThickness, socketHoleZ]) {
+        translate ([xPos, textAreaThickness + additionalFrontExtension, socketHoleZ]) {
             rotate([270 + bottomSocketAngle, 0, 0]) {
                 color([0, 0.5, 1, 0.6]) // Semi-transparent blue
                 cylinder (h = socketHeight1Base, d = diameter, center = false);
@@ -251,7 +261,7 @@ module visualizeSockets() {
         }
         
         // Top row sockets - semi-transparent red  
-        translate ([xPos, textAreaThickness + socketHeight1 + dividerThickness, socketHoleZ]) {
+        translate ([xPos, textAreaThickness + additionalFrontExtension + socketHeight1 + dividerThickness, socketHoleZ]) {
             rotate([270 + topSocketAngle, 0, 0]) {
                 color([1, 0.3, 0.3, 0.6]) // Semi-transparent red
                 cylinder (h = socketHeight2Base, d = diameter, center = false);
@@ -295,7 +305,7 @@ union () {
         // **************************
         // Cut out the sockets
         // **************************
-        translate([0,textAreaThickness,socketHoleZ]) {
+        translate([0, textAreaThickness + additionalFrontExtension, socketHoleZ]) {
             // Loop through all the specified sockets
             socketHoles();
         }
@@ -305,7 +315,7 @@ union () {
     //// Divider wall - show when both angles are small (0-5 degrees)
     //// **************************
     if (bottomSocketAngle <= 5 && topSocketAngle <= 5) {
-        translate([0,offsetCalc,0]) {
+        translate([0, offsetCalc + additionalFrontExtension, 0]) {
             solidDivider();
         }
     }
