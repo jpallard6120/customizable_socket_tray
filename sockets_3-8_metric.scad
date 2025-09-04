@@ -37,6 +37,11 @@ socketHeight1Base = 30;
 // Top socket height base value (exact size, add clearance manually)  
 socketHeight2Base = 51;
 
+//// Single row mode
+// Set to true to generate only the bottom row of sockets (no divider or top row)
+// When true, creates a single-row tray; when false, creates the standard dual-row design
+singleRowMode = false;
+
 // Size of the text
 textSize = 5;
 // Gap above and below the text
@@ -141,15 +146,15 @@ socketClearanceExtension = 3;  // mm of clearance above the furthest socket tip
 // Calculate the Y position of the furthest tip of tilted sockets
 // Furthest tip Y = socket_height * cos(angle) + socket_radius * sin(angle)
 bottomFurthestTipY = socketHeight1Base * cos(bottomSocketAngle) + (largestSocketDiameter/2) * sin(bottomSocketAngle);
-topFurthestTipY = socketHeight2Base * cos(topSocketAngle) + (largestSocketDiameter/2) * sin(topSocketAngle);
+topFurthestTipY = singleRowMode ? 0 : socketHeight2Base * cos(topSocketAngle) + (largestSocketDiameter/2) * sin(topSocketAngle);
 
 // Calculate required heights: furthest tip position + extra clearance
 socketHeight1 = bottomFurthestTipY + socketClearanceExtension;
-socketHeight2 = topFurthestTipY + socketClearanceExtension;
+socketHeight2 = singleRowMode ? 0 : topFurthestTipY + socketClearanceExtension;
 
 //// Modifies original use of socketHeight variable
-//// to accommodate the divier wall
-socketHeight = socketHeight1 + socketHeight2 + dividerThickness;
+//// to accommodate the divider wall (only add divider thickness if not single row)
+socketHeight = socketHeight1 + socketHeight2 + (singleRowMode ? 0 : dividerThickness);
 
 //// Calculate divider wall z axis location
 offsetCalc = (textPaddingTopAndBottom * 2) + textSize + socketHeight1;
@@ -228,10 +233,12 @@ module socketHoles() {
             }
         }
         
-        //// Top row sockets (deep sockets) - tilted cylindrical cut  
-        translate ([xPos, socketHeight1 + dividerThickness, 0]) {
-            rotate([270 + topSocketAngle, 0, 0]) {
-                cylinder (h = socketHeight2 / cos(topSocketAngle) + 5, d = diameter, center = false);
+        //// Top row sockets (deep sockets) - tilted cylindrical cut (only if not single row mode)
+        if (!singleRowMode) {
+            translate ([xPos, socketHeight1 + dividerThickness, 0]) {
+                rotate([270 + topSocketAngle, 0, 0]) {
+                    cylinder (h = socketHeight2 / cos(topSocketAngle) + 5, d = diameter, center = false);
+                }
             }
         }
         
@@ -260,11 +267,13 @@ module visualizeSockets() {
             }
         }
         
-        // Top row sockets - semi-transparent red  
-        translate ([xPos, textAreaThickness + additionalFrontExtension + socketHeight1 + dividerThickness, socketHoleZ]) {
-            rotate([270 + topSocketAngle, 0, 0]) {
-                color([1, 0.3, 0.3, 0.6]) // Semi-transparent red
-                cylinder (h = socketHeight2Base, d = diameter, center = false);
+        // Top row sockets - semi-transparent red (only if not single row mode)
+        if (!singleRowMode) {
+            translate ([xPos, textAreaThickness + additionalFrontExtension + socketHeight1 + dividerThickness, socketHoleZ]) {
+                rotate([270 + topSocketAngle, 0, 0]) {
+                    color([1, 0.3, 0.3, 0.6]) // Semi-transparent red
+                    cylinder (h = socketHeight2Base, d = diameter, center = false);
+                }
             }
         }
     }
@@ -312,18 +321,20 @@ union () {
     }
     
     //// **************************
-    //// Divider wall - show when both angles are small (0-5 degrees)
+    //// Divider wall - show when both angles are small (0-5 degrees) and not in single row mode
     //// **************************
-    if (bottomSocketAngle <= 5 && topSocketAngle <= 5) {
+    if (!singleRowMode && bottomSocketAngle <= 5 && topSocketAngle <= 5) {
         translate([0, offsetCalc + additionalFrontExtension, 0]) {
             solidDivider();
         }
     }
     
     //// **************************
-    //// Back wall for top row - show when top angle is small to prevent sockets sliding out
+    //// Back wall for top row - show when top angle is small to prevent sockets sliding out and not in single row mode
     //// **************************
-    topRowBackWall();
+    if (!singleRowMode) {
+        topRowBackWall();
+    }
     
     // **************************
     // Visualize sockets sitting in the tray (optional)
