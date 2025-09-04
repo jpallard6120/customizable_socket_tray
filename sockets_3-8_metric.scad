@@ -1,34 +1,15 @@
-// Author: Russell Stout
-// Version 1.4
+// ===================================
+// LAYOUT AND MODE CONFIGURATION
+// ===================================
 
-// Show OpenSCAD version in the console
-echo(version=version());
+//// Single row mode
+// Set to true to generate only the bottom row of sockets (no divider or top row)
+// When true, creates a single-row tray; when false, creates the standard dual-row design
+singleRowMode = false;
 
-// ***********************************************
-// ###############################################
-// ***********************************************
-
-// Feel free to edit below this section
-
-// ***********************************************
-// ###############################################
-// ***********************************************
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Modified by Breno Auto Garage
-// to include a central wall
-// to divide shallow and deep
-// sockets in the same model
-
-// EVERYTHING I'VE ADDED is
-// is noted by a double comment ( //// )
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-//// Divider thickness variable added
-// Thickness of the socket divider wall
-dividerThickness = 2;
-
-// Height of the socket. Consider adding a few extra mm so the socket fits easily when you are using "wallWidthAboveTools"
+// ===================================
+// SOCKET DIMENSIONS AND ANGLES
+// ===================================
 
 //// Two separate heights added, top & bottom
 //// (These values are not influenced by clearance offset)
@@ -37,10 +18,61 @@ socketHeight1Base = 30;
 // Top socket height base value (exact size, add clearance manually)  
 socketHeight2Base = 51;
 
-//// Single row mode
-// Set to true to generate only the bottom row of sockets (no divider or top row)
-// When true, creates a single-row tray; when false, creates the standard dual-row design
-singleRowMode = false;
+//// Angle parameters for tilting socket pockets (in degrees)
+// Angle for bottom row of sockets (positive tilts forward)
+// Recommended range: 0-30 degrees for easy socket removal
+bottomSocketAngle = 10;
+// Angle for top row of sockets (positive tilts forward)  
+// Recommended range: 0-30 degrees for easy socket removal
+topSocketAngle = 10;
+
+//// Socket depth parameter
+// How much deeper the socket cutouts extend beyond the default depth (as percentage of total tray height)
+// 0% = default depth (previous behavior), positive values make sockets go deeper into the tray
+// Higher values make sockets sit deeper in the tray for better security
+// Recommended: 20-40% deeper for good socket retention without going through the bottom
+socketDepthPercent = 20; 
+
+// ===================================
+// WALL DIMENSIONS AND STRUCTURE
+// ===================================
+
+// Wall width between and above sockets
+wallWidthBetweenTools = 2;
+// Wall size above sockets. Set to 0 for no wall above
+wallWidthAboveTools = 2;
+// Wall behind the largest socket to the "floor"
+wallWidthBehindTools = 2;
+// Extra wall width added to either end of the block
+wallWidthExtraOnEnds = 1;
+
+//// Divider thickness variable added
+// Thickness of the socket divider wall
+dividerThickness = 2;
+
+//// Depth below surface for divider wall
+dividerHeightOffset = 2;
+
+// ===================================
+// TRAY SIZE ADJUSTMENTS
+// ===================================
+
+//// Additional tray bottom height
+// Extra height added to the bottom of the tray (in mm)
+// Positive values make the tray taller by extending downward from the bottom
+// Negative values reduce the tray height (use carefully to avoid thin walls)
+// This is useful for adding extra strength or clearance to the tray base
+additionalTrayHeight = 2;  // mm of height adjustment (positive = taller, negative = shorter)
+
+//// Additional front extension
+// Extra length added to the front of the tray in the Y direction (in mm)
+// Positive values extend the tray forward to provide more clearance around text
+// Use this when socket depth cuts into the text area
+additionalFrontExtension = 1;  // mm of front extension
+
+// ===================================
+// TEXT CONFIGURATION
+// ===================================
 
 // Size of the text
 textSize = 5;
@@ -52,49 +84,17 @@ textHeight = 0.6;
 textPosition = "emboss";
 // textPosition = "engrave";
 
-//// Depth below surface for divider wall
-dividerHeightOffset = 2;
-
-//// Additional tray bottom height
-// Extra height added to the bottom of the tray (in mm)
-// Positive values make the tray taller by extending downward from the bottom
-// Negative values reduce the tray height (use carefully to avoid thin walls)
-// This is useful for adding extra strength or clearance to the tray base
-additionalTrayHeight = 7;  // mm of height adjustment (positive = taller, negative = shorter)
-
-//// Additional front extension
-// Extra length added to the front of the tray in the Y direction (in mm)
-// Positive values extend the tray forward to provide more clearance around text
-// Use this when socket depth cuts into the text area
-additionalFrontExtension = 0;  // mm of front extension
-
-//// Angle parameters for tilting socket pockets (in degrees)
-// Angle for bottom row of sockets (positive tilts forward)
-// Recommended range: 0-30 degrees for easy socket removal
-bottomSocketAngle = 15;
-// Angle for top row of sockets (positive tilts forward)  
-// Recommended range: 0-30 degrees for easy socket removal
-topSocketAngle = 15;
+// ===================================
+// VISUALIZATION OPTIONS
+// ===================================
 
 //// Socket visualization toggle
 // Set to true to show semi-transparent sockets in the tray for visualization
 showSockets = true;
 
-//// Socket depth parameter
-// How much deeper the socket cutouts extend beyond the default depth (as percentage of total tray height)
-// 0% = default depth (previous behavior), positive values make sockets go deeper into the tray
-// Higher values make sockets sit deeper in the tray for better security
-// Recommended: 20-40% deeper for good socket retention without going through the bottom
-socketDepthPercent = 2;  // 70% deeper than default
-
-// Wall width between and above sockets
-wallWidthBetweenTools = 2;
-// Wall size above sockets. Set to 0 for no wall above
-wallWidthAboveTools = 2;
-// Wall behind the largest socket to the "floor"
-wallWidthBehindTools = 2;
-// Extra wall width added to either end of the block
-wallWidthExtraOnEnds = 1;
+// ===================================
+// SOCKET DATA AND LABELS
+// ===================================
 
 // Enter diameters of the socket cut outs as they appear on the block. Add as many or as few as you'd like; the size of the print will automatically adjust
 socketDiameters = [17.2, 17.2, 18.4, 19.7, 22.3, 24.3, 24.75, 27.9, 29.8];
@@ -104,10 +104,18 @@ socketLabels = ["3/8", "7/16", "1/2", "9/16", "5/8", "11/16", "3/4", "13/16", "7
 socketHeightsCustom = [];
 // socketHeightsCustom = [35, 40, 45];
 
+// ===================================
+// CLEARANCE AND TOLERANCES
+// ===================================
+
 // Extra clearance is required to make to socket slip in nicely. The amount of tolerance required varies on the size of socket. Base clearance applied to each hole
 socketClearanceOffset = 0.4;
 // Percent of diameter extra clearance (e.g. 0.01 = 1%)
-socketClearanceGain = 0.01;
+socketClearanceGain = 0.02;
+
+// ===================================
+// FONT SETTINGS
+// ===================================
 
 //// Font (Liberation Sans is Default)
 fontVariable = "Liberation Sans";
