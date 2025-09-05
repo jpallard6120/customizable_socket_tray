@@ -5,7 +5,7 @@
 //// Single row mode
 // Set to true to generate only the bottom row of sockets (no divider or top row)
 // When true, creates a single-row tray; when false, creates the standard dual-row design
-singleRowMode = false;
+singleRowMode = true;
 
 // ===================================
 // SOCKET DIMENSIONS AND ANGLES
@@ -14,7 +14,7 @@ singleRowMode = false;
 //// Two separate heights added, top & bottom
 //// (These values are not influenced by clearance offset)
 // Bottom socket height base value (exact size, add clearance manually)
-socketHeight1Base = 30;
+socketHeight1Base = 82;
 // Top socket height base value (exact size, add clearance manually)  
 socketHeight2Base = 51;
 
@@ -97,9 +97,9 @@ showSockets = true;
 // ===================================
 
 // Enter diameters of the socket cut outs as they appear on the block. Add as many or as few as you'd like; the size of the print will automatically adjust
-socketDiameters = [17.2, 17.2, 18.4, 19.7, 22.3, 24.3, 24.75, 27.9, 29.8];
+socketDiameters = [24.30, 24.38, 24.26, 24.39, 24.47, 24.47, 24.40, 25.92, 27.88, 29.88];
 // Add the label text for each entry above (there must be an entry for each socket). Text must have have dummy entries to match the diameter array
-socketLabels = ["3/8", "7/16", "1/2", "9/16", "5/8", "11/16", "3/4", "13/16", "7/8"];
+socketLabels = ["8", "10", "11", "12", "13", "14", "15", "17", "19", "21"];
 // OPTIONAL: If this variable is enabled, the heights of each individual socket can be customized. Also, defining the height of each socket is not necessary; any socket height not defined here will default to the height specified above
 socketHeightsCustom = [];
 // socketHeightsCustom = [35, 40, 45];
@@ -181,17 +181,30 @@ xSize = sumAccumulativeOffset(socketDiameters, len(socketDiameters)-1, wallWidth
 // Add manual front extension to maintain text clearance
 ySize = socketHeight + textAreaThickness + wallWidthAboveTools + additionalFrontExtension;
 
-// Debug output to see the furthest tip positions
-echo("Bottom furthest tip Y position:", bottomFurthestTipY, "mm");
-echo("Top furthest tip Y position:", topFurthestTipY, "mm");
-echo("Bottom total height:", socketHeight1, "mm");
-echo("Top total height:", socketHeight2, "mm");
-echo("Top socket angle:", topSocketAngle, "degrees");
-echo("Back wall thickness:", backWallThickness, "mm");
-echo("Additional front extension:", additionalFrontExtension, "mm");
-echo("Total ySize:", ySize, "mm");
-echo("Tray height (zSize):", zSize, "mm");
-echo("Socket depth:", socketDepth, "mm", "(", socketDepthPercent, "% deeper than default)");
+// Calculate total model dimensions (including sockets and embossed text)
+totalWidth = xSize;  // X dimension (left to right)
+totalDepth = ySize;  // Y dimension (front to back)
+
+// Calculate the highest Z-coordinate of tilted sockets
+// Sockets are rotated [270 + angle, 0, 0], so they tilt forward
+// The highest Z point is: socketHoleZ + socketHeight * sin(angle)
+bottomSocketHighestZ = socketHoleZ + socketHeight1Base * sin(bottomSocketAngle);
+topSocketHighestZ = singleRowMode ? 0 : socketHoleZ + socketHeight2Base * sin(topSocketAngle);
+maxSocketHighestZ = max(bottomSocketHighestZ, topSocketHighestZ);
+
+// Calculate maximum height considering tray, embossed text, and actual socket geometry
+trayTopZ = zSize + (textPosition == "emboss" ? textHeight : 0);
+totalHeight = max(trayTopZ, maxSocketHighestZ);
+
+// Display total model dimensions for toolbox fitting and 3D printer build plate planning
+echo("=== TOTAL MODEL DIMENSIONS ===");
+echo("Total Width (X):", totalWidth, "mm");
+echo("Total Depth (Y):", totalDepth, "mm"); 
+echo("Total Height (Z):", totalHeight, "mm");
+echo("Build plate area required:", totalWidth, "x", totalDepth, "mm");
+echo("Tray top Z:", trayTopZ, "mm");
+echo("Highest socket Z:", maxSocketHighestZ, "mm");
+echo("==================================");
 
 // Calculate where to start to center sockets on the block
 socketsPerRow = len(socketDiameters);
